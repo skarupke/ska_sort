@@ -1293,7 +1293,7 @@ struct ListInplaceSorter
     {
         ListSortData<It, ExtractKey> offset;
         offset.current_index = 0;
-        offset.recursion_limit = 8;
+        offset.recursion_limit = 16;
         offset.next_sort = next_sort;
         offset.next_sort_data = next_sort_data;
         sort(begin, end, extract_key, &offset);
