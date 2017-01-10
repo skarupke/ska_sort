@@ -1392,7 +1392,7 @@ struct IdentityFunctor
 template<typename It, typename ExtractKey>
 static void ska_sort(It begin, It end, ExtractKey && extract_key)
 {
-    detail::inplace_radix_sort<128, 128>(begin, end, extract_key);
+    detail::inplace_radix_sort<128, 1024>(begin, end, extract_key);
 }
 
 template<typename It>
