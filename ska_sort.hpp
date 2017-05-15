@@ -693,8 +693,15 @@ struct FallbackRadixSorter : RadixSorter<decltype(to_radix_sort_key(std::declval
         });
     }
 };
+
+template<typename...>
+struct void_t
+{
+	using type = void;
+};
+
 template<typename T>
-struct FallbackRadixSorter<T, typename std::enable_if<!std::is_same<void, decltype(to_unsigned_or_bool(std::declval<T>()))>::value>::type>
+struct FallbackRadixSorter<T, typename void_t<decltype(to_unsigned_or_bool(std::declval<T>()))>::type>
     : RadixSorter<decltype(to_unsigned_or_bool(std::declval<T>()))>
 {
 };
@@ -843,7 +850,7 @@ struct FallbackSubKey
     }
 };
 template<typename T>
-struct FallbackSubKey<T, typename std::enable_if<!std::is_same<void, decltype(to_unsigned_or_bool(std::declval<T>()))>::value>::type>
+struct FallbackSubKey<T, typename void_t<decltype(to_unsigned_or_bool(std::declval<T>()))>::type>
     : SubKey<decltype(to_unsigned_or_bool(std::declval<T>()))>
 {
 };
@@ -1012,7 +1019,7 @@ struct ListSubKey
 };
 
 template<typename T>
-struct FallbackSubKey<T, typename std::enable_if<!std::is_same<void, decltype(std::declval<T>()[0])>::value>::type> : ListSubKey<T>
+struct FallbackSubKey<T, typename void_t<decltype(std::declval<T>()[0])>::type> : ListSubKey<T>
 {
 };
 
@@ -1340,8 +1347,8 @@ struct InplaceSorter : FallbackInplaceSorter<StdSortThreshold, AmericanFlagSortT
 };
 
 template<std::ptrdiff_t StdSortThreshold, std::ptrdiff_t AmericanFlagSortThreshold, typename CurrentSubKey, typename SubKeyType>
-struct FallbackInplaceSorter<StdSortThreshold, AmericanFlagSortThreshold, CurrentSubKey, SubKeyType, typename std::enable_if<!std::is_same<void, decltype(std::declval<SubKeyType>()[0])>::value>::type>
-    : ListInplaceSorter<StdSortThreshold, AmericanFlagSortThreshold, CurrentSubKey, SubKeyType>
+struct FallbackInplaceSorter<StdSortThreshold, AmericanFlagSortThreshold, CurrentSubKey, SubKeyType, typename void_t<decltype(std::declval<SubKeyType>()[0])>::type>
+	: ListInplaceSorter<StdSortThreshold, AmericanFlagSortThreshold, CurrentSubKey, SubKeyType>
 {
 };
 
