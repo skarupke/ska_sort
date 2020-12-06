@@ -17,6 +17,7 @@ FetchContent_Declare(ska_sort SOURCE_DIR "${PROJECT_SOURCE_DIR}/..")
 
 # ---- Import dependencies ----
 
+include(GoogleTest)
 FetchContent_MakeAvailable(googletest ska_sort)
 
 # ---- Options ----
@@ -32,7 +33,7 @@ function(test_case NAME)
   target_include_directories("${NAME}" PRIVATE "${PROJECT_SOURCE_DIR}/include")
   target_link_libraries("${NAME}" PRIVATE gtest_main ska::sort)
   target_compile_features("${NAME}" PRIVATE cxx_std_14)
-  add_test(NAME "${NAME}" COMMAND "${NAME}")
+  gtest_discover_tests("${NAME}" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 endfunction()
 
 test_case(ska_sort_tests)
