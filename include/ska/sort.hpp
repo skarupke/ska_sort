@@ -1424,7 +1424,7 @@ static void sort(It begin, It end, ExtractKey && extract_key)
 template<typename It>
 static void sort(It begin, It end)
 {
-    sort(begin, end, detail::IdentityFunctor());
+    ska::sort(begin, end, detail::IdentityFunctor());
 }
 
 template<typename It, typename OutIt, typename ExtractKey>
@@ -1433,7 +1433,7 @@ bool sort_copy(It begin, It end, OutIt buffer_begin, ExtractKey && key)
     std::ptrdiff_t num_elements = end - begin;
     if (num_elements < 128 || detail::radix_sort_pass_count<typename std::result_of<ExtractKey(decltype(*begin))>::type> >= 8)
     {
-        sort(begin, end, key);
+        ska::sort(begin, end, key);
         return false;
     }
     else
@@ -1443,7 +1443,7 @@ bool sort_copy(It begin, It end, OutIt buffer_begin, ExtractKey && key)
 template<typename It, typename OutIt>
 bool sort_copy(It begin, It end, OutIt buffer_begin)
 {
-    return sort_copy(begin, end, buffer_begin, detail::IdentityFunctor());
+    return ska::sort_copy(begin, end, buffer_begin, detail::IdentityFunctor());
 }
 
 }  // namespace ska
