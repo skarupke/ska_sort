@@ -526,7 +526,7 @@ TEST(inplace_radix_sort, move_only)
     }
 }
 
-#ifdef FULL_TESTS_SLOW_COMPILE_TIME
+#ifdef FULL_TESTS
 TEST(inplace_radix_sort, tuple)
 {
     std::vector<std::tuple<bool, int, bool>> to_sort = { std::tuple<bool, int, bool>{ true, 5, true }, std::tuple<bool, int, bool>{ true, 5, false }, std::tuple<bool, int, bool>{ false, 6, false }, std::tuple<bool, int, bool>{ true, 7, true }, std::tuple<bool, int, bool>{ true, 4, false }, std::tuple<bool, int, bool>{ false, 4, true }, std::tuple<bool, int, bool>{ false, 5, false } };
@@ -535,7 +535,7 @@ TEST(inplace_radix_sort, tuple)
 }
 #endif
 
-#ifdef FULL_TESTS_SLOW_COMPILE_TIME
+#ifdef FULL_TESTS
 TEST(inplace_radix_sort, nested_tuple)
 {
     std::vector<std::tuple<bool, std::pair<int, std::pair<int, int>>, std::tuple<bool, bool, bool>>> to_sort;
@@ -588,7 +588,7 @@ TEST(inplace_radix_sort, vector)
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
 
-#ifdef FULL_TESTS_SLOW_COMPILE_TIME
+#ifdef FULL_TESTS
 TEST(inplace_radix_sort, string_in_vector)
 {
     std::vector<std::vector<std::string>> to_sort =
@@ -612,7 +612,7 @@ TEST(inplace_radix_sort, string_in_vector)
 }
 #endif
 
-#ifdef FULL_TESTS_SLOW_COMPILE_TIME
+#ifdef FULL_TESTS
 TEST(inplace_radix_sort, vector_tuple_string)
 {
     std::vector<std::tuple<std::string, std::string>> to_sort;
@@ -747,7 +747,7 @@ TEST(radix_sort, movables)
         ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
 
-#ifdef FULL_TESTS_SLOW_COMPILE_TIME
+#ifdef FULL_TESTS
 TEST(inplace_radix_sort, vector_of_vector_of_movables)
 {
     std::vector<std::vector<std::vector<MovableInt>>> to_sort;
@@ -768,7 +768,7 @@ TEST(inplace_radix_sort, vector_of_vector_of_movables)
 }
 #endif
 
-#ifdef FULL_TESTS_SLOW_COMPILE_TIME
+#ifdef FULL_TESTS
 TEST(inplace_radix_sort, vector_vector_vector)
 {
     std::vector<std::vector<std::vector<std::vector<MovableInt>>>> to_sort;

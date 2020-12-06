@@ -21,7 +21,7 @@ FetchContent_MakeAvailable(googletest ska_sort)
 
 # ---- Options ----
 
-option(FULL_TESTS_SLOW_COMPILE_TIME "Include slow to compile tests" OFF)
+option(FULL_TESTS "Include slow to compile tests" OFF)
 
 # ---- Test ----
 
@@ -36,4 +36,8 @@ function(test_case NAME)
 endfunction()
 
 test_case(ska_sort_tests)
+if(FULL_TESTS)
+  target_compile_definitions(ska_sort_tests PRIVATE FULL_TESTS)
+endif()
+
 # test_case(ska_sort_benchmarks)
