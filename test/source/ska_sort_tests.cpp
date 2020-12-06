@@ -2,64 +2,20 @@
 // Distributed under the Boost Software License, Version 1.0.
 //    (See http://www.boost.org/LICENSE_1_0.txt)
 
-#include "ska_sort.hpp"
-
-#define FULL_TESTS_SLOW_COMPILE_TIME
-
-#define SKA_SORT_NOINLINE __attribute__((noinline))
-
-template<typename It, typename OutIt, typename ExtractKey>
-void counting_sort(It begin, It end, OutIt out_begin, ExtractKey && extract_key)
-{
-    detail::counting_sort_impl(begin, end, out_begin, extract_key);
-}
-template<typename It, typename OutIt>
-void counting_sort(It begin, It end, OutIt out_begin)
-{
-    using detail::to_unsigned_or_bool;
-    detail::counting_sort_impl(begin, end, out_begin, [](auto && a){ return to_unsigned_or_bool(a); });
-}
-
-template<typename It, typename OutIt, typename ExtractKey>
-bool radix_sort(It begin, It end, OutIt buffer_begin, ExtractKey && extract_key)
-{
-    return detail::RadixSorter<typename std::result_of<ExtractKey(decltype(*begin))>::type>::sort(begin, end, buffer_begin, extract_key);
-}
-template<typename It, typename OutIt>
-bool radix_sort(It begin, It end, OutIt buffer_begin)
-{
-    return detail::RadixSorter<decltype(*begin)>::sort(begin, end, buffer_begin, detail::IdentityFunctor());
-}
-
-template<typename It, typename ExtractKey>
-static void inplace_radix_sort(It begin, It end, ExtractKey && extract_key)
-{
-    detail::inplace_radix_sort<1, 1>(begin, end, extract_key);
-}
-
-template<typename It>
-static void inplace_radix_sort(It begin, It end)
-{
-    inplace_radix_sort(begin, end, detail::IdentityFunctor());
-}
-
-template<typename It, typename ExtractKey>
-static void american_flag_sort(It begin, It end, ExtractKey && extract_key)
-{
-    detail::inplace_radix_sort<1, std::numeric_limits<std::ptrdiff_t>::max()>(begin, end, extract_key);
-}
-
-template<typename It>
-static void american_flag_sort(It begin, It end)
-{
-    american_flag_sort(begin, end, detail::IdentityFunctor());
-}
-
-
-#ifdef ENABLE_GTEST
-
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <limits>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
+
 #include <gtest/gtest.h>
+#include <ska/sort.hpp>
+
+#include "test_sort.hpp"
 
 TEST(counting_sort, simple)
 {
@@ -90,6 +46,7 @@ TEST(radix_sort, uint8)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(to_sort, result);
 }
+
 TEST(radix_sort, uint8_256_items)
 {
     std::vector<uint8_t> to_sort(256, 254);
@@ -102,6 +59,7 @@ TEST(radix_sort, uint8_256_items)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(to_sort, result);
 }
+
 TEST(radix_sort, int8)
 {
     std::vector<int8_t> to_sort = { 5, 6, 19, -4, 2, 5, 0, -55, 7, 23, 6, 8, 127, -128, 99 };
@@ -113,6 +71,7 @@ TEST(radix_sort, int8)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(to_sort, result);
 }
+
 TEST(radix_sort, text)
 {
     std::string to_sort = "Hello, World!";
@@ -124,6 +83,7 @@ TEST(radix_sort, text)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(to_sort, result);
 }
+
 TEST(radix_sort, u16string)
 {
     std::u16string to_sort = u"Hello, World!";
@@ -135,6 +95,7 @@ TEST(radix_sort, u16string)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(to_sort, result);
 }
+
 TEST(radix_sort, u32string)
 {
     std::u32string to_sort = U"Hello, World!";
@@ -146,6 +107,7 @@ TEST(radix_sort, u32string)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(to_sort, result);
 }
+
 TEST(radix_sort, int16)
 {
     std::vector<int16_t> to_sort = { 5, 6, 19, -4, 2, 5, 0, -55, 7, 1000, 23, 6, 8, 127, -128, -129, -256, -32768, 32767, 99 };
@@ -157,6 +119,7 @@ TEST(radix_sort, int16)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(to_sort, result);
 }
+
 TEST(radix_sort, uint16)
 {
     std::vector<uint16_t> to_sort = { 5, 6, 19, 2, 5, 7, 0, 23, 6, 256, 255, 8, 99, 1024, 65535, 65534 };
@@ -168,6 +131,7 @@ TEST(radix_sort, uint16)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(to_sort, result);
 }
+
 TEST(radix_sort, int32)
 {
     std::vector<int32_t> to_sort = { 5, 6, 19, -4, 2, 5, 0, -55, 7, 1000, 23, 6, 8, 127, -128, -129, -256, 32768, -32769, -32768, 32767, 99, 1000000, -1000001, std::numeric_limits<int>::lowest(), std::numeric_limits<int>::max(), std::numeric_limits<int>::max() - 1, std::numeric_limits<int>::lowest() + 1 };
@@ -179,6 +143,7 @@ TEST(radix_sort, int32)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(result, to_sort);
 }
+
 TEST(radix_sort, uint32)
 {
     std::vector<uint32_t> to_sort = { 5, 6, 19, 2, 5, 7, 0, 23, 6, 256, 255, 8, 99, 1024, 65536, 65535, 65534, 1000000, std::numeric_limits<unsigned int>::max() };
@@ -190,6 +155,7 @@ TEST(radix_sort, uint32)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(result, to_sort);
 }
+
 TEST(radix_sort, int64)
 {
     std::vector<int64_t> to_sort = { 5, 6, 19, std::numeric_limits<std::int32_t>::lowest() - 1, std::numeric_limits<ino64_t>::lowest(), -1000000000000, 1000000000000, std::numeric_limits<int32_t>::max(), std::numeric_limits<int64_t>::max(), -4, 2, 5, 0, -55, 7, 1000, 23, 6, 8, 127, -128, -129, -256, 32768, -32769, -32768, 32767, 99, 1000000, -1000001, std::numeric_limits<int>::lowest(), std::numeric_limits<int>::max(), std::numeric_limits<int>::max() - 1, std::numeric_limits<int>::lowest() + 1 };
@@ -201,6 +167,7 @@ TEST(radix_sort, int64)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(result, to_sort);
 }
+
 TEST(radix_sort, uint64)
 {
     std::vector<uint64_t> to_sort = { 5, 6, 19, 2, 5, 7, 0, std::numeric_limits<uint32_t>::max() + 1, 1000000000000, std::numeric_limits<uint64_t>::max(), 23, 6, 256, 255, 8, 99, 1024, 65536, 65535, 65534, 1000000, std::numeric_limits<unsigned int>::max() };
@@ -212,6 +179,7 @@ TEST(radix_sort, uint64)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(result, to_sort);
 }
+
 TEST(radix_sort, float)
 {
     std::vector<float> to_sort = { 5, 6, 19, std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -4, 2, 5, 0, -55, 7, 1000, 23, 6, 8, 127, -128, -129, -256, 32768, -32769, -32768, 32767, 99, 1000000, -1000001, 0.1f, 2.5f, 17.8f, -12.4f, -0.0000002f, -0.0f, -777777777.7f, 444444444444.4f };
@@ -223,6 +191,7 @@ TEST(radix_sort, float)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(result, to_sort);
 }
+
 TEST(radix_sort, double)
 {
     std::vector<double> to_sort = { 5, 6, 19, std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(), -4, 2, 5, 0, -55, 7, 1000, 23, 6, 8, 127, -128, -129, -256, 32768, -32769, -32768, 32767, 99, 1000000, -1000001, 0.1, 2.5, 17.8, -12.4, -0.0000002, -0.0, -777777777.7, 444444444444.4 };
@@ -234,6 +203,7 @@ TEST(radix_sort, double)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(result, to_sort);
 }
+
 TEST(radix_sort, pair)
 {
     std::vector<std::pair<int, bool>> to_sort = { { 5, true }, { 5, false }, { 6, false }, { 7, true }, { 4, false }, { 4, true } };
@@ -245,6 +215,7 @@ TEST(radix_sort, pair)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(to_sort, result);
 }
+
 TEST(radix_sort, pair_other_direction)
 {
     std::vector<std::pair<bool, int>> to_sort = { { true, 5 }, { false, 5 }, { false, 6 }, { true, 7 }, { false, 4 }, { true, 4 } };
@@ -256,6 +227,7 @@ TEST(radix_sort, pair_other_direction)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(to_sort, result);
 }
+
 TEST(radix_sort, tuple)
 {
     std::vector<std::tuple<bool, int, bool>> to_sort = { std::tuple<bool, int, bool>{ true, 5, true }, std::tuple<bool, int, bool>{ true, 5, false }, std::tuple<bool, int, bool>{ false, 6, false }, std::tuple<bool, int, bool>{ true, 7, true }, std::tuple<bool, int, bool>{ true, 4, false }, std::tuple<bool, int, bool>{ false, 4, true }, std::tuple<bool, int, bool>{ false, 5, false } };
@@ -267,6 +239,7 @@ TEST(radix_sort, tuple)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(result, to_sort);
 }
+
 TEST(radix_sort, reference)
 {
     std::vector<int> to_sort = { 6, 5, 4, 3, 2, 1 };
@@ -278,6 +251,7 @@ TEST(radix_sort, reference)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(result, to_sort);
 }
+
 TEST(radix_sort, pair_reference)
 {
     std::vector<std::pair<int, bool>> to_sort = { { 5, true }, { 5, false }, { 6, false }, { 7, true }, { 4, false }, { 4, true } };
@@ -289,6 +263,7 @@ TEST(radix_sort, pair_reference)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(to_sort, result);
 }
+
 TEST(radix_sort, tuple_reference)
 {
     std::vector<std::tuple<bool, int, bool>> to_sort = { std::tuple<bool, int, bool>{ true, 5, true }, std::tuple<bool, int, bool>{ true, 5, false }, std::tuple<bool, int, bool>{ false, 6, false }, std::tuple<bool, int, bool>{ true, 7, true }, std::tuple<bool, int, bool>{ true, 4, false }, std::tuple<bool, int, bool>{ false, 4, true }, std::tuple<bool, int, bool>{ false, 5, false } };
@@ -300,6 +275,7 @@ TEST(radix_sort, tuple_reference)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(result, to_sort);
 }
+
 TEST(radix_sort, std_array)
 {
     std::vector<std::array<float, 4>> to_sort = { {{ 1.0f, 2.0f, 3.0f, 4.0f }}, {{ 0.0f, 3.0f, 4.0f, 5.0f }}, {{ 1.0f, 1.5f, 2.0f, 2.5f }}, {{ 1.0f, 2.0f, 2.5f, 4.0f }}, {{ 1.0f, 2.0f, 2.5f, 3.5f }}, {{ 0.0f, 3.0f, 4.5f, 4.5f }} };
@@ -311,6 +287,7 @@ TEST(radix_sort, std_array)
         std::sort(result.begin(), result.end());
     ASSERT_EQ(result, to_sort);
 }
+
 TEST(radix_sort, move_only)
 {
     std::vector<std::unique_ptr<int>> to_sort;
@@ -350,7 +327,7 @@ TEST(linear_sort, tuple)
 {
     std::vector<std::tuple<bool, int, bool>> to_sort = { std::tuple<bool, int, bool>{ true, 5, true }, std::tuple<bool, int, bool>{ true, 5, false }, std::tuple<bool, int, bool>{ false, 6, false }, std::tuple<bool, int, bool>{ true, 7, true }, std::tuple<bool, int, bool>{ true, 4, false }, std::tuple<bool, int, bool>{ false, 4, true }, std::tuple<bool, int, bool>{ false, 5, false } };
     std::vector<std::tuple<bool, int, bool>> result = to_sort;
-    bool which_buffer = ska_sort_copy(to_sort.begin(), to_sort.end(), result.begin());
+    bool which_buffer = ska::sort_copy(to_sort.begin(), to_sort.end(), result.begin());
     if (which_buffer)
         std::sort(to_sort.begin(), to_sort.end());
     else
@@ -362,7 +339,7 @@ TEST(linear_sort, tuple)
 {
     std::vector<std::string> to_sort = { "foo", "bar", "baz" };
     std::vector<std::string> result = to_sort;
-    bool which_buffer = ska_sort_copy(to_sort.begin(), to_sort.end(), result.begin());
+    bool which_buffer = ska::sort_copy(to_sort.begin(), to_sort.end(), result.begin());
     if (which_buffer)
         std::sort(to_sort.begin(), to_sort.end());
     else
@@ -376,72 +353,84 @@ TEST(inplace_radix_sort, uint8)
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, int8)
 {
     std::vector<int8_t> to_sort = { 5, 6, 19, -4, 2, 5, 0, -55, 7, 23, 6, 8, 127, -128, 99 };
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, text)
 {
     std::string to_sort = "Hello, World!";
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, u16string)
 {
     std::u16string to_sort = u"Hello, World!";
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, u32string)
 {
     std::u32string to_sort = U"Hello, World!";
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, int16)
 {
     std::vector<int16_t> to_sort = { 5, 6, 19, -4, 2, 5, 0, -55, 7, 1000, 23, 6, 8, 127, -128, -129, -256, -32768, 32767, 99 };
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, uint16)
 {
     std::vector<uint16_t> to_sort = { 5, 6, 19, 2, 5, 7, 0, 23, 6, 256, 255, 8, 99, 1024, 65535, 65534 };
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, int32)
 {
     std::vector<int32_t> to_sort = { 5, 6, 19, -4, 2, 5, 0, -55, 7, 1000, 23, 6, 8, 127, -128, -129, -256, 32768, -32769, -32768, 32767, 99, 1000000, -1000001, std::numeric_limits<int>::lowest(), std::numeric_limits<int>::max(), std::numeric_limits<int>::max() - 1, std::numeric_limits<int>::lowest() + 1 };
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, uint32)
 {
     std::vector<uint32_t> to_sort = { 5, 6, 19, 2, 5, 7, 0, 23, 6, 256, 255, 8, 99, 1024, 65536, 65535, 65534, 1000000, std::numeric_limits<unsigned int>::max() };
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, int64)
 {
     std::vector<int64_t> to_sort = { 5, 6, 19, std::numeric_limits<std::int32_t>::lowest() - 1, std::numeric_limits<ino64_t>::lowest(), -1000000000000, 1000000000000, std::numeric_limits<int32_t>::max(), std::numeric_limits<int64_t>::max(), -4, 2, 5, 0, -55, 7, 1000, 23, 6, 8, 127, -128, -129, -256, 32768, -32769, -32768, 32767, 99, 1000000, -1000001, std::numeric_limits<int>::lowest(), std::numeric_limits<int>::max(), std::numeric_limits<int>::max() - 1, std::numeric_limits<int>::lowest() + 1 };
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, uint64)
 {
     std::vector<uint64_t> to_sort = { 5, 6, 19, 2, 5, 7, 0, std::numeric_limits<uint32_t>::max() + 1, 1000000000000, std::numeric_limits<uint64_t>::max(), 23, 6, 256, 255, 8, 99, 1024, 65536, 65535, 65534, 1000000, std::numeric_limits<unsigned int>::max() };
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, float)
 {
     std::vector<float> to_sort = { 5, 6, 19, std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -4, 2, 5, 0, -55, 7, 1000, 23, 6, 8, 127, -128, -129, -256, 32768, -32769, -32768, 32767, 99, 1000000, -1000001, 0.1f, 2.5f, 17.8f, -12.4f, -0.0000002f, -0.0f, -777777777.7f, 444444444444.4f };
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, double)
 {
     std::vector<double> to_sort = { 5, 6, 19, std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(), -4, 2, 5, 0, -55, 7, 1000, 23, 6, 8, 127, -128, -129, -256, 32768, -32769, -32768, 32767, 99, 1000000, -1000001, 0.1, 2.5, 17.8, -12.4, -0.0000002, -0.0, -777777777.7, 444444444444.4 };
@@ -473,6 +462,7 @@ TEST(inplace_radix_sort, vector_bool)
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, pair)
 {
     std::vector<std::pair<int, bool>> to_sort =
@@ -487,6 +477,7 @@ TEST(inplace_radix_sort, pair)
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, pair_other_direction)
 {
     std::vector<std::pair<bool, int>> to_sort =
@@ -501,18 +492,21 @@ TEST(inplace_radix_sort, pair_other_direction)
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, reference)
 {
     std::vector<int> to_sort = { 6, 5, 4, 3, 2, 1 };
     inplace_radix_sort(to_sort.begin(), to_sort.end(), [](int & i) -> int & { return i; });
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, pair_reference)
 {
     std::vector<std::pair<int, bool>> to_sort = { { 5, true }, { 5, false }, { 6, false }, { 7, true }, { 4, false }, { 4, true } };
     inplace_radix_sort(to_sort.begin(), to_sort.end(), [](auto & i) -> decltype(auto) { return i; });
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, move_only)
 {
     std::vector<std::unique_ptr<int>> to_sort;
@@ -531,6 +525,7 @@ TEST(inplace_radix_sort, move_only)
         ASSERT_EQ(sorted[i], *to_sort[i]);
     }
 }
+
 #ifdef FULL_TESTS_SLOW_COMPILE_TIME
 TEST(inplace_radix_sort, tuple)
 {
@@ -653,6 +648,7 @@ TEST(inplace_radix_sort, std_array)
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 TEST(inplace_radix_sort, pointers)
 {
     int array[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
@@ -671,6 +667,7 @@ TEST(inplace_radix_sort, pointers)
     inplace_radix_sort(to_sort.begin(), to_sort.end());
     ASSERT_TRUE(std::is_sorted(to_sort.begin(), to_sort.end()));
 }
+
 /*#include <list>
 TEST(inplace_radix_sort, vector_of_list)
 {
