@@ -1,6 +1,6 @@
 # Introduction
 
-`ska_sort` is an in-place radix sort, implemented as a C++14 header-only
+`ska::sort` is an in-place radix sort, implemented as a C++14 header-only
 library using templates.
 
 # Usage
@@ -8,14 +8,14 @@ library using templates.
 For a vector of a basic type, just pass two iterators:
 
 ```cpp
-ska_sort(durations.begin(), durations.end());
+ska::sort(durations.begin(), durations.end());
 ```
 
 For a more complicated situation, provide a lambda that returns a key to sort
 on:
 
 ```cpp
-ska_sort(enemies.begin(), enemies.end(), [](const Enemey & enemy)
+ska::sort(enemies.begin(), enemies.end(), [](const Enemey & enemy)
 {
     return std::make_tuple(!is_in_combat(enemy), distance_to_player(enemy));
 });
