@@ -2,7 +2,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 //    (See http://www.boost.org/LICENSE_1_0.txt)
 
-#pragma once
+#ifndef SKA_SORT_H
+#define SKA_SORT_H
 
 #include <cstring>
 #include <cstdint>
@@ -1445,3 +1446,5 @@ bool sort_copy(It begin, It end, OutIt buffer_begin)
 }
 
 }  // namespace ska
+
+#endif // SKA_SORT_H
