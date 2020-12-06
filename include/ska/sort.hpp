@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstring>
 #include <cstdint>
 #include <algorithm>
 #include <type_traits>
@@ -102,23 +103,19 @@ inline unsigned long long to_unsigned_or_bool(unsigned long long l)
 }
 inline std::uint32_t to_unsigned_or_bool(float f)
 {
-    union
-    {
-        float f;
-        std::uint32_t u;
-    } as_union = { f };
-    std::uint32_t sign_bit = -std::int32_t(as_union.u >> 31);
-    return as_union.u ^ (sign_bit | 0x80000000);
+    std::uint32_t u;
+    std::memcpy(&u, &f, sizeof(float));
+
+    std::uint32_t sign_bit = -std::int32_t(u >> 31);
+    return u ^ (sign_bit | 0x80000000);
 }
 inline std::uint64_t to_unsigned_or_bool(double f)
 {
-    union
-    {
-        double d;
-        std::uint64_t u;
-    } as_union = { f };
-    std::uint64_t sign_bit = -std::int64_t(as_union.u >> 63);
-    return as_union.u ^ (sign_bit | 0x8000000000000000);
+    std::uint64_t u;
+    std::memcpy(&u, &f, sizeof(double));
+
+    std::uint64_t sign_bit = -std::int64_t(u >> 63);
+    return u ^ (sign_bit | 0x8000000000000000);
 }
 template<typename T>
 inline size_t to_unsigned_or_bool(T * ptr)
