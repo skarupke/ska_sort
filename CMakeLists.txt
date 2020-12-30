@@ -71,3 +71,7 @@ install(
     DESTINATION "${sort_install_cmakedir}"
     COMPONENT ska_sort_Development
 )
+
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  include(CPack)
+endif()
