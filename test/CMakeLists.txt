@@ -10,7 +10,7 @@ set(gtest_force_shared_crt ON CACHE INTERNAL "Always use msvcrt.dll")
 FetchContent_Declare(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG release-1.10.0
+    GIT_TAG 389cb68b87193358358ae87cc56d257fd0d80189
 )
 
 FetchContent_Declare(ska_sort SOURCE_DIR "${PROJECT_SOURCE_DIR}/..")
