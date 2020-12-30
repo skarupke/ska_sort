@@ -41,6 +41,7 @@ set(sort_include_directory "${CMAKE_INSTALL_INCLUDEDIR}/${sort_directory}")
 install(
     DIRECTORY "${PROJECT_SOURCE_DIR}/include/"
     DESTINATION "${sort_include_directory}"
+    COMPONENT ska_sort_Development
 )
 
 install(
@@ -60,6 +61,7 @@ set(sort_install_cmakedir "${CMAKE_INSTALL_LIBDIR}/cmake/${sort_directory}")
 install(
     FILES "${PROJECT_BINARY_DIR}/ska_sort-config-version.cmake"
     DESTINATION "${sort_install_cmakedir}"
+    COMPONENT ska_sort_Development
 )
 
 install(
@@ -67,4 +69,5 @@ install(
     FILE ska_sort-config.cmake
     NAMESPACE ska::
     DESTINATION "${sort_install_cmakedir}"
+    COMPONENT ska_sort_Development
 )
