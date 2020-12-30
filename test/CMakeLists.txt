@@ -22,7 +22,7 @@ FetchContent_MakeAvailable(googletest ska_sort)
 
 # ---- Options ----
 
-option(FULL_TESTS "Include slow to compile tests" OFF)
+option(FULL_TESTS "Include slow to compile tests" ON)
 
 # ---- Test ----
 

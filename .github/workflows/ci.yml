@@ -30,7 +30,6 @@ jobs:
 
       - name: Configure
         run: cmake -S test -B build -G Ninja -D CMAKE_BUILD_TYPE=Release
-          -D FULL_TESTS=ON
 
       - name: Build
         run: cmake --build build
