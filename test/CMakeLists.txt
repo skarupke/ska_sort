@@ -2,23 +2,14 @@ cmake_minimum_required(VERSION 3.14)
 
 project(ska_sort_tests CXX)
 
-# ---- Declare dependencies ----
+# ---- Dependencies ----
 
 include(FetchContent)
-
-set(gtest_force_shared_crt ON CACHE INTERNAL "Always use msvcrt.dll")
-FetchContent_Declare(
-    googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG 389cb68b87193358358ae87cc56d257fd0d80189
-)
-
 FetchContent_Declare(ska_sort SOURCE_DIR "${PROJECT_SOURCE_DIR}/..")
+FetchContent_MakeAvailable(ska_sort)
 
-# ---- Import dependencies ----
-
-include(GoogleTest)
-FetchContent_MakeAvailable(googletest ska_sort)
+find_package(doctest 2.4.4 CONFIG REQUIRED)
+include(doctest)
 
 # ---- Options ----
 
@@ -30,10 +21,16 @@ enable_testing()
 
 function(test_case NAME)
   add_executable("${NAME}" "source/${NAME}.cpp")
+  set_property(
+      SOURCE "source/${NAME}.cpp"
+      PROPERTY COMPILE_DEFINITIONS
+      DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+      DOCTEST_CONFIG_SUPER_FAST_ASSERTS
+  )
   target_include_directories("${NAME}" PRIVATE "${PROJECT_SOURCE_DIR}/include")
-  target_link_libraries("${NAME}" PRIVATE gtest_main ska::sort)
+  target_link_libraries("${NAME}" PRIVATE doctest::doctest ska::sort)
   target_compile_features("${NAME}" PRIVATE cxx_std_14)
-  gtest_discover_tests("${NAME}" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+  doctest_discover_tests("${NAME}" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 endfunction()
 
 test_case(ska_sort_tests)
