@@ -20,23 +20,24 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
-      - uses: friendlyanon/fetch-core-count@v1
-        id: cores
-
-      - name: Install Ninja
-        uses: seanmiddleditch/gha-setup-ninja@v3
+      - uses: actions/cache@v2
         with:
-          version: '1.10.2'
+          path: prefix
+          key: ${{ hashFiles('script/ci_install_deps.sh') }}-x86_64
+
+      - name: Install dependencies
+        run: script/ci_install_deps.sh
 
       - name: Configure
-        run: cmake -S test -B build -G Ninja -D CMAKE_BUILD_TYPE=Release
+        run: cmake -S test -B build -D CMAKE_BUILD_TYPE=Release
+          -D "CMAKE_PREFIX_PATH=$(pwd)/prefix"
 
       - name: Build
         run: cmake --build build
 
       - name: Run
         working-directory: build
-        run: ctest --output-on-failure -j ${{ steps.cores.outputs.plus_one }}
+        run: ctest --output-on-failure
 
   other_tests:
     if: >-
@@ -54,13 +55,20 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
+      - uses: actions/cache@v2
+        with:
+          path: prefix
+          key: ${{ hashFiles('script/ci_install_deps.sh') }}-${{ matrix.arch }}
+
       - uses: uraimo/run-on-arch-action@v2.0.8
         name: Build & Test
         with:
           arch: ${{ matrix.arch }}
           distro: alpine_latest
           run: |
+            set -o xtrace
             apk add git cmake build-base
-            cmake -S test -B build -D CMAKE_BUILD_TYPE=Release
+            script/ci_install_deps.sh
+            cmake -S test -B build -D CMAKE_BUILD_TYPE=Release -D "CMAKE_PREFIX_PATH=$(pwd)/prefix"
             cmake --build build
             (cd build; ctest --output-on-failure)
