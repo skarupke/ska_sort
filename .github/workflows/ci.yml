@@ -10,7 +10,7 @@ on:
       - master
 
 jobs:
-  tests:
+  x86_64_tests:
     if: >-
       ! contains(toJSON(github.event.commits.*.message), '[skip ci]') &&
       ! contains(toJSON(github.event.commits.*.message), '[skip github]')
@@ -37,3 +37,30 @@ jobs:
       - name: Run
         working-directory: build
         run: ctest --output-on-failure -j ${{ steps.cores.outputs.plus_one }}
+
+  other_tests:
+    if: >-
+      ! contains(toJSON(github.event.commits.*.message), '[skip ci]') &&
+      ! contains(toJSON(github.event.commits.*.message), '[skip github]')
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        arch: [aarch64, s390x, ppc64le]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - uses: uraimo/run-on-arch-action@v2.0.8
+        name: Build & Test
+        with:
+          arch: ${{ matrix.arch }}
+          distro: alpine_latest
+          run: |
+            apk add git cmake build-base
+            cmake -S test -B build -D CMAKE_BUILD_TYPE=Release
+            cmake --build build
+            (cd build; ctest --output-on-failure)
