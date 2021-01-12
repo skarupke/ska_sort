@@ -4,9 +4,14 @@ project(ska_sort_tests CXX)
 
 # ---- Dependencies ----
 
+set(ska_sort_INCLUDE_WITHOUT_SYSTEM YES CACHE INTERNAL "")
+
 include(FetchContent)
 FetchContent_Declare(ska_sort SOURCE_DIR "${PROJECT_SOURCE_DIR}/..")
 FetchContent_MakeAvailable(ska_sort)
+
+include(../cmake/warnings.cmake)
+target_compile_options(sort INTERFACE ${project_warnings})
 
 find_package(doctest 2.4.4 CONFIG REQUIRED)
 include(doctest)
