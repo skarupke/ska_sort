@@ -754,9 +754,11 @@ inline void unroll_loop_four_times(It begin, size_t iteration_count, Func && to_
     case 3:
         to_call(begin);
         ++begin;
+        /* fallthrough */
     case 2:
         to_call(begin);
         ++begin;
+        /* fallthrough */
     case 1:
         to_call(begin);
     }
@@ -787,7 +789,7 @@ inline It custom_std_partition(It begin, It end, F && func)
 struct PartitionInfo
 {
     PartitionInfo()
-        : count(0)
+        : count(0), next_offset(0)
     {
     }
 
