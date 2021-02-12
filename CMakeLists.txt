@@ -35,8 +35,7 @@ target_compile_features(sort INTERFACE cxx_std_14)
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
-set(sort_directory "ska_sort-${PROJECT_VERSION}")
-set(sort_include_directory "${CMAKE_INSTALL_INCLUDEDIR}/${sort_directory}")
+set(sort_include_directory "${CMAKE_INSTALL_INCLUDEDIR}/sort")
 
 install(
     DIRECTORY "${PROJECT_SOURCE_DIR}/include/"
@@ -56,11 +55,16 @@ write_basic_package_version_file(
     ARCH_INDEPENDENT
 )
 
-set(sort_install_cmakedir "${CMAKE_INSTALL_LIBDIR}/cmake/${sort_directory}")
+set(
+    ska_sort_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/sort"
+    CACHE STRING "CMake package config location relative to the install prefix"
+)
+
+mark_as_advanced(ska_sort_INSTALL_CMAKEDIR)
 
 install(
     FILES "${PROJECT_BINARY_DIR}/ska_sort-config-version.cmake"
-    DESTINATION "${sort_install_cmakedir}"
+    DESTINATION "${ska_sort_INSTALL_CMAKEDIR}"
     COMPONENT ska_sort_Development
 )
 
@@ -68,7 +72,7 @@ install(
     EXPORT ska_sortTargets
     FILE ska_sort-config.cmake
     NAMESPACE ska::
-    DESTINATION "${sort_install_cmakedir}"
+    DESTINATION "${ska_sort_INSTALL_CMAKEDIR}"
     COMPONENT ska_sort_Development
 )
 
