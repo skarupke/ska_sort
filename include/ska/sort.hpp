@@ -1071,7 +1071,7 @@ struct UnsignedInplaceSorter
     template<typename T>
     inline static uint8_t current_byte(T && elem, void * sort_data)
     {
-        return CurrentSubKey::sub_key(elem, sort_data) >> ShiftAmount;
+        return static_cast<uint8_t>(CurrentSubKey::sub_key(elem, sort_data) >> ShiftAmount);
     }
     template<typename It, typename ExtractKey>
     static void sort(It begin, It end, std::ptrdiff_t num_elements, ExtractKey & extract_key, void (*next_sort)(It, It, std::ptrdiff_t, ExtractKey &, void *), void * sort_data)
