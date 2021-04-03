@@ -1,6 +1,5 @@
 if(MSVC)
-  set(
-      project_warnings
+  add_compile_options(
       /W4 # Set warning level 4 (/Wall is too noisy)
       /WX # Warnings as errors
       # Disabled warnings
@@ -29,8 +28,7 @@ if(MSVC)
       # /we4711 # The compiler performed inlining on the given function, although it was not marked for inlining
   )
 else()
-  set(
-      project_warnings
+  add_compile_options(
       -Wall
       -Wextra
       -pedantic

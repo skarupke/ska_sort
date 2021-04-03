@@ -2,80 +2,48 @@ cmake_minimum_required(VERSION 3.14)
 
 project(
     ska_sort
-    VERSION 0.0.1
+    VERSION 0.1.0
     DESCRIPTION "Sorting in less than O(n log n)"
     HOMEPAGE_URL "https://github.com/skarupke/ska_sort"
     LANGUAGES CXX
 )
 
-# ---- Warning guard ----
-
-# Protect dependents from this project's warnings if the guard isn't disabled
-set(ska_sort_warning_guard SYSTEM)
-if(ska_sort_INCLUDE_WITHOUT_SYSTEM)
-  set(ska_sort_warning_guard "")
-endif()
+include(cmake/in-source-guard.cmake)
+include(cmake/variables.cmake)
 
 # ---- Declare library ----
 
-add_library(sort INTERFACE)
-add_library(ska::sort ALIAS sort)
+add_library(ska_sort INTERFACE)
+add_library(ska::sort ALIAS ska_sort)
+
+set_property(TARGET ska_sort PROPERTY EXPORT_NAME sort)
 
 target_include_directories(
-    sort
+    ska_sort
     ${ska_sort_warning_guard}
     INTERFACE
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
 )
 
-target_compile_features(sort INTERFACE cxx_std_14)
+target_compile_features(ska_sort INTERFACE cxx_std_14)
 
 # ---- Install ----
 
-include(CMakePackageConfigHelpers)
-include(GNUInstallDirs)
+include(cmake/install-rules.cmake)
 
-set(sort_include_directory "${CMAKE_INSTALL_INCLUDEDIR}/sort")
-
-install(
-    DIRECTORY "${PROJECT_SOURCE_DIR}/include/"
-    DESTINATION "${sort_include_directory}"
-    COMPONENT ska_sort_Development
-)
-
-install(
-    TARGETS sort
-    EXPORT ska_sortTargets
-    INCLUDES DESTINATION "${sort_include_directory}"
-)
-
-write_basic_package_version_file(
-    ska_sort-config-version.cmake
-    COMPATIBILITY SameMajorVersion
-    ARCH_INDEPENDENT
-)
-
-set(
-    ska_sort_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/sort"
-    CACHE STRING "CMake package config location relative to the install prefix"
-)
-
-mark_as_advanced(ska_sort_INSTALL_CMAKEDIR)
-
-install(
-    FILES "${PROJECT_BINARY_DIR}/ska_sort-config-version.cmake"
-    DESTINATION "${ska_sort_INSTALL_CMAKEDIR}"
-    COMPONENT ska_sort_Development
-)
-
-install(
-    EXPORT ska_sortTargets
-    FILE ska_sort-config.cmake
-    NAMESPACE ska::
-    DESTINATION "${ska_sort_INSTALL_CMAKEDIR}"
-    COMPONENT ska_sort_Development
-)
-
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+if(PROJECT_IS_TOP_LEVEL)
   include(CPack)
+endif()
+
+# ---- Developer mode ----
+
+if(NOT ska_sort_DEVELOPER_MODE)
+  return()
+elseif(NOT PROJECT_IS_TOP_LEVEL)
+  message(AUTHOR_WARNING "Developer mode is for developers of ska_sort.")
+endif()
+
+include(CTest)
+if(BUILD_TESTING)
+  add_subdirectory(test)
 endif()

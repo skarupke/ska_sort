@@ -2,73 +2,53 @@ name: Continuous Integration
 
 on:
   push:
-    branches:
-      - master
+    branches: [master]
 
   pull_request:
-    branches:
-      - master
+    branches: [master]
 
 jobs:
   x86_64_tests:
-    if: >-
-      ! contains(toJSON(github.event.commits.*.message), '[skip ci]') &&
-      ! contains(toJSON(github.event.commits.*.message), '[skip github]')
-
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+    - uses: actions/checkout@v1
 
-      - uses: actions/cache@v2
-        with:
-          path: prefix
-          key: ${{ hashFiles('script/ci_install_deps.sh') }}-x86_64
+    - name: Install doctest
+      run: sudo apt-get install -y doctest-dev
 
-      - name: Install dependencies
-        run: script/ci_install_deps.sh
+    - name: Configure
+      run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Release
 
-      - name: Configure
-        run: cmake -S test -B build -D CMAKE_BUILD_TYPE=Release
-          -D "CMAKE_PREFIX_PATH=$(pwd)/prefix"
+    - name: Build
+      run: cmake --build build
 
-      - name: Build
-        run: cmake --build build
-
-      - name: Run
-        working-directory: build
-        run: ctest --output-on-failure
+    - name: Run
+      working-directory: build
+      run: ctest --output-on-failure
 
   other_tests:
-    if: >-
-      ! contains(toJSON(github.event.commits.*.message), '[skip ci]') &&
-      ! contains(toJSON(github.event.commits.*.message), '[skip github]')
-
     strategy:
       fail-fast: false
 
       matrix:
         arch: [aarch64, s390x, ppc64le]
 
+    name: ${{ matrix.arch }}_tests
+
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+    - uses: actions/checkout@v1
 
-      - uses: actions/cache@v2
-        with:
-          path: prefix
-          key: ${{ hashFiles('script/ci_install_deps.sh') }}-${{ matrix.arch }}
-
-      - uses: uraimo/run-on-arch-action@v2.0.8
-        name: Build & Test
-        with:
-          arch: ${{ matrix.arch }}
-          distro: alpine_latest
-          run: |
-            set -o xtrace
-            apk add git cmake build-base
-            script/ci_install_deps.sh
-            cmake -S test -B build -D CMAKE_BUILD_TYPE=Release -D "CMAKE_PREFIX_PATH=$(pwd)/prefix"
-            cmake --build build
-            (cd build; ctest --output-on-failure)
+    - uses: uraimo/run-on-arch-action@v2.0.9
+      name: Build & Test
+      with:
+        arch: ${{ matrix.arch }}
+        distro: alpine_latest
+        shell: /bin/sh -x
+        run: |
+          apk add git cmake build-base doctest-dev
+          cmake -S . -B build -D CMAKE_BUILD_TYPE=Release
+          cmake --build build
+          (cd build; ctest --output-on-failure)

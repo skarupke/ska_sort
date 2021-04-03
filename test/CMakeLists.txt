@@ -2,18 +2,16 @@ cmake_minimum_required(VERSION 3.14)
 
 project(ska_sort_tests CXX)
 
+include(../cmake/project-is-top-level.cmake)
+include(../cmake/warnings.cmake)
+
 # ---- Dependencies ----
 
-set(ska_sort_INCLUDE_WITHOUT_SYSTEM YES CACHE INTERNAL "")
+if(PROJECT_IS_TOP_LEVEL)
+  find_package(ska_sort REQUIRED)
+endif()
 
-include(FetchContent)
-FetchContent_Declare(ska_sort SOURCE_DIR "${PROJECT_SOURCE_DIR}/..")
-FetchContent_MakeAvailable(ska_sort)
-
-include(../cmake/warnings.cmake)
-target_compile_options(sort INTERFACE ${project_warnings})
-
-find_package(doctest 2.4.4 CONFIG REQUIRED)
+find_package(doctest 2 REQUIRED)
 include(doctest)
 
 # ---- Options ----
