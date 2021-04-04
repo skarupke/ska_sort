@@ -1,0 +1,54 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [master]
+
+  pull_request:
+    branches: [master]
+
+jobs:
+  x86_64_tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Install doctest
+      run: sudo apt-get install -y doctest-dev
+
+    - name: Configure
+      run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: cmake --build build
+
+    - name: Run
+      working-directory: build
+      run: ctest --output-on-failure
+
+  other_tests:
+    strategy:
+      fail-fast: false
+
+      matrix:
+        arch: [aarch64, s390x, ppc64le]
+
+    name: ${{ matrix.arch }}_tests
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - uses: uraimo/run-on-arch-action@v2.0.9
+      name: Build & Test
+      with:
+        arch: ${{ matrix.arch }}
+        distro: alpine_latest
+        shell: /bin/sh -x
+        run: |
+          apk add git cmake build-base doctest-dev
+          cmake -S . -B build -D CMAKE_BUILD_TYPE=Release
+          cmake --build build
+          (cd build; ctest --output-on-failure)

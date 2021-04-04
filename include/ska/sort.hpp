@@ -2,14 +2,19 @@
 // Distributed under the Boost Software License, Version 1.0.
 //    (See http://www.boost.org/LICENSE_1_0.txt)
 
-#pragma once
+#ifndef SKA_SORT_H
+#define SKA_SORT_H
 
+#include <cstring>
 #include <cstdint>
 #include <algorithm>
+#include <array>
 #include <type_traits>
 #include <tuple>
 #include <utility>
 
+namespace ska
+{
 namespace detail
 {
 template<typename count_type, typename It, typename OutIt, typename ExtractKey>
@@ -100,23 +105,19 @@ inline unsigned long long to_unsigned_or_bool(unsigned long long l)
 }
 inline std::uint32_t to_unsigned_or_bool(float f)
 {
-    union
-    {
-        float f;
-        std::uint32_t u;
-    } as_union = { f };
-    std::uint32_t sign_bit = -std::int32_t(as_union.u >> 31);
-    return as_union.u ^ (sign_bit | 0x80000000);
+    std::uint32_t u;
+    std::memcpy(&u, &f, sizeof(float));
+
+    std::uint32_t sign_bit = -std::int32_t(u >> 31);
+    return u ^ (sign_bit | 0x80000000);
 }
 inline std::uint64_t to_unsigned_or_bool(double f)
 {
-    union
-    {
-        double d;
-        std::uint64_t u;
-    } as_union = { f };
-    std::uint64_t sign_bit = -std::int64_t(as_union.u >> 63);
-    return as_union.u ^ (sign_bit | 0x8000000000000000);
+    std::uint64_t u;
+    std::memcpy(&u, &f, sizeof(double));
+
+    std::uint64_t sign_bit = -std::int64_t(u >> 63);
+    return u ^ (sign_bit | 0x8000000000000000);
 }
 template<typename T>
 inline size_t to_unsigned_or_bool(T * ptr)
@@ -753,9 +754,11 @@ inline void unroll_loop_four_times(It begin, size_t iteration_count, Func && to_
     case 3:
         to_call(begin);
         ++begin;
+        /* fallthrough */
     case 2:
         to_call(begin);
         ++begin;
+        /* fallthrough */
     case 1:
         to_call(begin);
     }
@@ -786,7 +789,7 @@ inline It custom_std_partition(It begin, It end, F && func)
 struct PartitionInfo
 {
     PartitionInfo()
-        : count(0)
+        : count(0), next_offset(0)
     {
     }
 
@@ -1068,7 +1071,7 @@ struct UnsignedInplaceSorter
     template<typename T>
     inline static uint8_t current_byte(T && elem, void * sort_data)
     {
-        return CurrentSubKey::sub_key(elem, sort_data) >> ShiftAmount;
+        return static_cast<uint8_t>(CurrentSubKey::sub_key(elem, sort_data) >> ShiftAmount);
     }
     template<typename It, typename ExtractKey>
     static void sort(It begin, It end, std::ptrdiff_t num_elements, ExtractKey & extract_key, void (*next_sort)(It, It, std::ptrdiff_t, ExtractKey &, void *), void * sort_data)
@@ -1145,7 +1148,7 @@ struct UnsignedInplaceSorter
         {
             size_t start_offset = 0;
             It partition_begin = begin;
-            for (uint8_t * it = remaining_partitions, * end = remaining_partitions + num_partitions; it != end; ++it)
+            for (uint8_t * it = remaining_partitions, * it_end = remaining_partitions + num_partitions; it != it_end; ++it)
             {
                 size_t end_offset = partitions[*it].next_offset;
                 It partition_end = begin + end_offset;
@@ -1412,34 +1415,39 @@ struct IdentityFunctor
         return std::forward<T>(i);
     }
 };
-}
+}  // namespace detail
 
 template<typename It, typename ExtractKey>
-static void ska_sort(It begin, It end, ExtractKey && extract_key)
+static void sort(It begin, It end, ExtractKey && extract_key)
 {
     detail::inplace_radix_sort<128, 1024>(begin, end, extract_key);
 }
 
 template<typename It>
-static void ska_sort(It begin, It end)
+static void sort(It begin, It end)
 {
-    ska_sort(begin, end, detail::IdentityFunctor());
+    ska::sort(begin, end, detail::IdentityFunctor());
 }
 
 template<typename It, typename OutIt, typename ExtractKey>
-bool ska_sort_copy(It begin, It end, OutIt buffer_begin, ExtractKey && key)
+bool sort_copy(It begin, It end, OutIt buffer_begin, ExtractKey && key)
 {
     std::ptrdiff_t num_elements = end - begin;
     if (num_elements < 128 || detail::radix_sort_pass_count<typename std::result_of<ExtractKey(decltype(*begin))>::type> >= 8)
     {
-        ska_sort(begin, end, key);
+        ska::sort(begin, end, key);
         return false;
     }
     else
         return detail::RadixSorter<typename std::result_of<ExtractKey(decltype(*begin))>::type>::sort(begin, end, buffer_begin, key);
 }
+
 template<typename It, typename OutIt>
-bool ska_sort_copy(It begin, It end, OutIt buffer_begin)
+bool sort_copy(It begin, It end, OutIt buffer_begin)
 {
-    return ska_sort_copy(begin, end, buffer_begin, detail::IdentityFunctor());
+    return ska::sort_copy(begin, end, buffer_begin, detail::IdentityFunctor());
 }
+
+}  // namespace ska
+
+#endif // SKA_SORT_H
